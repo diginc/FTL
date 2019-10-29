@@ -2,7 +2,7 @@ version: 2
 
 .job_template: &job_template
   docker:
-    - image: pihole/ftl-build:$CIRCLE_JOB
+    - image: diginc/ftl-build:$CIRCLE_JOB
   steps:
     - checkout
     - run:
@@ -24,8 +24,10 @@ version: 2
           sha1sum pihole-FTL-* > ${BIN_NAME}.sha1
           wget https://ftl.pi-hole.net:8080/FTL-client
           chmod +x ./FTL-client
-          [[ "$CIRCLE_PR_NUMBER" == "" ]] && ./FTL-client "${FOLDER}" "${BIN_NAME}" "${FTL_SECRET}"
-          [[ "$CIRCLE_PR_NUMBER" == "" ]] && ./FTL-client "${FOLDER}" "${BIN_NAME}.sha1" "${FTL_SECRET}"
+          [[ "$CIRCLE_PR_NUMBER" != "" ]] && exit 0
+          [[ "$CIRCLE_USERNAME" != "pi-hole" ]] && exit 0
+          ./FTL-client "${FOLDER}" "${BIN_NAME}" "${FTL_SECRET}"
+          ./FTL-client "${FOLDER}" "${BIN_NAME}.sha1" "${FTL_SECRET}"
           rm ./FTL-client
           ls -lah .
 
@@ -34,6 +36,11 @@ jobs:
     <<: *job_template
     environment:
       BIN_NAME: "pihole-FTL-arm-linux-gnueabi"
+
+  arm-qemu:
+    <<: *job_template
+    environment:
+      BIN_NAME: "pihole-FTL-armel-native"
 
   armhf:
     <<: *job_template
